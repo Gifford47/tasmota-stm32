@@ -98,7 +98,7 @@
 #undef USE_PWM_DIMMER_REMOTE                     // Disbale support for remote switches to PWM Dimmer
 #undef USE_KEELOQ                                // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #undef USE_SONOFF_D1                             // Disable support for Sonoff D1 Dimmer (+0k7 code)
-#undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
+//#undef USE_SHELLY_DIMMER                         // Disable support for Shelly Dimmer (+3k code)
 
 // -- Optional light modules ----------------------
 #undef USE_LIGHT                                 // Disable support for lights
@@ -348,7 +348,7 @@
 #undef USE_PWM_DIMMER                           // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_KEELOQ                               // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #undef USE_SONOFF_D1                            // Disable support for Sonoff D1 Dimmer (+0k7 code)
-#undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
+//#undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
 
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 #undef USE_EMULATION_WEMO
@@ -527,7 +527,7 @@
 #undef USE_EXS_DIMMER                           // Disable support for EX-Store WiFi Dimmer
 #undef USE_KEELOQ                               // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #undef USE_SONOFF_D1                            // Disable support for Sonoff D1 Dimmer (+0k7 code)
-#undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
+//#undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
 
 #define USE_I2C                                  // I2C using library wire (+10k code, 0k2 mem, 124 iram)
 #define USE_SPI                                // Hardware SPI using GPIO12(MISO), GPIO13(MOSI) and GPIO14(CLK) in addition to two user selectable GPIOs(CS and DC)
@@ -597,7 +597,7 @@
 //#undef USE_PWM_DIMMER                           // Disable support for MJ-SD01/acenx/NTONPOWER PWM dimmers (+4k5 code)
 #undef USE_KEELOQ                               // Disable support for Jarolift rollers by Keeloq algorithm (+4k5 code)
 #undef USE_SONOFF_D1                            // Disable support for Sonoff D1 Dimmer (+0k7 code)
-#undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
+//#undef USE_SHELLY_DIMMER                        // Disable support for Shelly Dimmer (+3k code)
 
 #define USE_LIGHT_PALETTE                        // Add support for color palette (+0k9 code)
 #define USE_LIGHT_ARTNET                         // Add support for DMX/ArtNet via UDP on port 6454 (+3.5k code)

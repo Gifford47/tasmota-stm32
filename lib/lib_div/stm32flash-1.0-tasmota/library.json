@@ -1,0 +1,23 @@
+{
+    "name": "stm32flash-tasmota",
+    "version": "1.0.0",
+    "description": "STM32 Flashing Library for Tasmota",
+    "repository": {
+      "type": "git",
+      "url": "https://github.com/arendst/Tasmota"
+    },
+    "license": "GPL-2.0-or-later",
+    "authors": [
+      {
+        "name": "Tasmota Team",
+        "url": "https://tasmota.github.io/docs/"
+      }
+    ],
+    "frameworks": "arduino",
+    "platforms": "espressif32",
+    "build": {
+      "flags": "-I include",
+      "srcFilter": "+<*> -<examples/> -<tests/>"
+    }
+  }
+  

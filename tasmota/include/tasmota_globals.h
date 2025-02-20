@@ -209,7 +209,7 @@ const char WIFI_HOSTNAME[] = WIFI_DEFAULT_HOSTNAME;    // Override by user_confi
 #undef USE_SONOFF_IFAN
 #undef USE_SONOFF_L1
 #undef USE_SONOFF_D1
-#undef USE_SHELLY_DIMMER
+//#undef USE_SHELLY_DIMMER
 #undef USE_RF_FLASH
 
 // Not ported (yet)

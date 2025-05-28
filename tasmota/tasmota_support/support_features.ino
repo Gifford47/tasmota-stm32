@@ -648,6 +648,9 @@ constexpr uint32_t feature[] = {
 #if defined(USE_SHELLY_DIMMER)
   0x00001000 |  // xdrv_45_shelly_dimmer.ino
 #endif
+#if defined(USE_STM32_COPROCESSOR)
+  0x00100000 |  // xdrv_92_stm32coprocessor.ino
+#endif
 #ifdef USE_RC522
   0x00002000 |  // xsns_80_mfrc522.ino
 #endif

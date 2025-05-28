@@ -1029,6 +1029,8 @@
 #define D_SENSOR_WOOLIIS_RX    "Wooliis Rx"
 #define D_SENSOR_C8_CO2_5K_RX  "C8-CO2-5K Rx"
 #define D_SENSOR_C8_CO2_5K_TX  "C8-CO2-5K Tx"
+#define D_SENSOR_STM32_BOOT0   "STM Boot 0"
+#define D_SENSOR_STM32_RST_INV "STM Reset"
 
 // Units
 #define D_UNIT_AMPERE "А"

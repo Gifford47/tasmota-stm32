@@ -232,7 +232,8 @@ enum UserSelectablePins {
   GPIO_C8_CO2_5K_TX, GPIO_C8_CO2_5K_RX, // C8-CO2-5K CO2 Sensor
   GPIO_V9240_TX, GPIO_V9240_RX,         //  V9240 serial interface
   GPIO_LD2402_TX, GPIO_LD2402_RX,       // HLK-LD2402
-  GPIO_SENSOR_END };
+  GPIO_STM32_BOOT0, GPIO_STM32_RST_INV, // STM32 Boot0 and Reset
+  GPIO_SENSOR_END};
 
 // Error as warning to rethink GPIO usage with max 2045
 static_assert(GPIO_SENSOR_END < 2000, "Too many UserSelectablePins");
@@ -510,7 +511,8 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_TWAI_TX "|" D_SENSOR_TWAI_RX "|" D_SENSOR_TWAI_BO "|" D_SENSOR_TWAI_CLK "|"
   D_SENSOR_C8_CO2_5K_TX "|" D_SENSOR_C8_CO2_5K_RX "|"
   D_SENSOR_V9240_TX "|" D_SENSOR_V9240_RX "|"
-  D_SENSOR_LD2402_TX "|" D_SENSOR_LD2402_RX
+  D_SENSOR_LD2402_TX "|" D_SENSOR_LD2402_RX "|"
+  D_SENSOR_STM32_BOOT0 "|" D_SENSOR_STM32_RST_INV
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1131,6 +1133,10 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_LD2402
   AGPIO(GPIO_LD2402_TX),                         // HLK-LD2402 Serial interface
   AGPIO(GPIO_LD2402_RX),                         // HLK-LD2402 Serial interface
+#endif
+#ifdef USE_STM32_COPROCESSOR
+  AGPIO(GPIO_STM32_BOOT0),
+  AGPIO(GPIO_STM32_RST_INV),
 #endif
 #ifdef USE_LD2410
   AGPIO(GPIO_LD2410_TX),                         // HLK-LD2410 Serial interface

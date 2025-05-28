@@ -37,14 +37,12 @@
 
 #include <TasmotaSerial.h>
 
-// This variable will be set to true after initialization
-bool initSuccess = false;
-
 TasmotaSerial *StmSerial = nullptr;
 
 struct STM
 {
     uint8_t *buffer = nullptr;          // Serial receive buffer
+    bool present = false;
 } Stm;
 
 
@@ -128,6 +126,10 @@ bool StmUpdateFirmware(uint8_t* data, uint32_t size)
     return ret;
 }
 
+bool StmPresent(void) {
+  return Stm.present;
+}
+
 uint32_t StmFlash(uint8_t* data, size_t size) {
 #ifdef STM32_COPROCESSOR_DEBUG
   AddLog(LOG_LEVEL_INFO, PSTR(STM_LOGNAME "Updating firmware with %u bytes"), size);
@@ -199,6 +201,14 @@ bool StmInit(void)
  * API Functions
 \*********************************************************************************************/
 
+bool StmModuleSelected(void) {
+  if (PinUsed(GPIO_STM32_BOOT0) && PinUsed(GPIO_STM32_RST_INV)) {
+    UpdateDevicesPresent(1);
+
+    Stm.present = true;
+  }
+  return Stm.present;
+}
 
 /*********************************************************************************************\
  * Commands
@@ -213,14 +223,14 @@ bool Xdrv92(uint32_t function) {
   bool result = false;
 
   if (FUNC_MODULE_INIT == function) {
-    initSuccess = StmInit();
-  } else if (initSuccess) {
-    result = true;
-    // switch (function) {
+    result = StmModuleSelected();
+  } else if (Stm.present) {
+    switch (function) {
     //   case FUNC_EVERY_SECOND:
     //     break;
-    //   case FUNC_INIT:
-    //     break;
+      case FUNC_INIT:
+        StmInit();
+        break;
     //   case FUNC_SET_DEVICE_POWER:
     //     break;
     //   case FUNC_SET_CHANNELS:
@@ -228,7 +238,7 @@ bool Xdrv92(uint32_t function) {
     //   case FUNC_ACTIVE:
     //     result = true;
     //     break;
-    // }
+    }
   }
 
   return result;

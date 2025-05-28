@@ -3226,8 +3226,10 @@ void HandleUploadDone(void) {
     Web.upload_error = 0;
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
-    TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
-    WSContentSend_P(HTTP_MSG_RSTRT);
+    if (Web.upload_file_type != UPL_SHD) {
+      TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
+      WSContentSend_P(HTTP_MSG_RSTRT);
+    } 
     ShowWebSource(SRC_WEBGUI);
   }
   SettingsBufferFree();
@@ -3353,6 +3355,11 @@ void HandleUploadLoop(void) {
         BUploadInit(UPL_SHD);
       }
 #endif  // SHELLY_FW_UPGRADE
+#ifdef USE_STM32_COPROCESSOR
+      else if (ShdPresent() && (0x00 == upload.buf[0]) && ((0x10 == upload.buf[1]) || (0x20 == upload.buf[1]) || (0x00 == upload.buf[1]))) {
+        BUploadInit(UPL_STM);
+      }
+#endif  // USE_STM32_COPROCESSOR
 #ifdef USE_CCLOADER
       else if (CCLChipFound() && 0x02 == upload.buf[0]) { // the 0x02 is only an assumption!!
         BUploadInit(UPL_CCL);
@@ -3479,6 +3486,11 @@ void HandleUploadLoop(void) {
         error = ShdFlash(data, BUpload.spi_hex_size);
       }
 #endif  // SHELLY_FW_UPGRADE
+#ifdef USE_STM32_COPROCESSOR
+      if (UPL_STM == Web.upload_file_type) {
+        error = StmFlash(data, BUpload.spi_hex_size);
+      }
+#endif  // USE_STM32_COPROCESSOR
 #ifdef USE_CCLOADER
       if (UPL_CCL == Web.upload_file_type) {
         error = CLLFlashFirmware(data, BUpload.spi_hex_size);

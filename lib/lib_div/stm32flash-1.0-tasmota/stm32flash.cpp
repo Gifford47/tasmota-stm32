@@ -340,6 +340,7 @@ static stm32_err_t stm32_send_init_seq(const stm32_t *stm)
 		return STM32_ERR_UNKNOWN;
 	}
 	ret = stream->readBytes(&byte, 1);
+	DEBUG_MSG("Init reply: ret=%d, byte=0x%02X", ret, byte);
 	if (ret == 1 && byte == STM32_ACK)
 		return STM32_ERR_OK;
 	if (ret == 1 && byte == STM32_NACK) {

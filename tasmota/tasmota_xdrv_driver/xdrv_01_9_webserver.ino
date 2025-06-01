@@ -3226,7 +3226,7 @@ void HandleUploadDone(void) {
     Web.upload_error = 0;
   } else {
     WSContentSend_P(PSTR("%06x'>" D_SUCCESSFUL "</font></b><br>"), WebColor(COL_TEXT_SUCCESS));
-    if (Web.upload_file_type != UPL_SHD) {
+    if (Web.upload_file_type != UPL_STM) {
       TasmotaGlobal.restart_flag = 2;  // Always restart to re-enable disabled features during update
       WSContentSend_P(HTTP_MSG_RSTRT);
     } 
@@ -3356,7 +3356,7 @@ void HandleUploadLoop(void) {
       }
 #endif  // SHELLY_FW_UPGRADE
 #ifdef USE_STM32_COPROCESSOR
-      else if (ShdPresent() && (0x00 == upload.buf[0]) && ((0x10 == upload.buf[1]) || (0x20 == upload.buf[1]) || (0x00 == upload.buf[1]))) {
+      else if (StmPresent() && (0x00 == upload.buf[0]) && ((0x10 == upload.buf[1]) || (0x20 == upload.buf[1]) || (0x00 == upload.buf[1]))) {
         BUploadInit(UPL_STM);
       }
 #endif  // USE_STM32_COPROCESSOR

@@ -235,9 +235,9 @@ bool Xdrv92(uint32_t function) {
     //     break;
     //   case FUNC_SET_CHANNELS:
     //     break;
-    //   case FUNC_ACTIVE:
-    //     result = true;
-    //     break;
+      case FUNC_ACTIVE:
+        result = true;
+        break;
     }
   }
 

@@ -32,6 +32,7 @@
 #define STM32_COPROCESSOR_DEBUG
 #define STM_LOGNAME                 "STM: "
 #define STM_BUFFER_SIZE             256
+#define STM_START_BYTE              0x01
 
 #include <stm32flash.h>
 
@@ -186,10 +187,16 @@ bool StmInit(void)
 #ifdef ESP32
             AddLog(LOG_LEVEL_DEBUG, PSTR(STM_LOGNAME "Serial UART%d"), StmSerial->getUart());
 #endif
-
+            uint8_t startbyte = STM_START_BYTE;
+            StmSerial->write(&startbyte, 1); // Send start byte to wake up the co-processor
             StmSerial->flush();
 
-            StmResetToAppMode();
+            // clear in the receive buffer
+            while (Serial.available())
+                Serial.read();
+            delay(50); // wait 50ms for the co-processor to come online
+
+            //StmResetToAppMode();
             return true;
         }
     }

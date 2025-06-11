@@ -334,12 +334,21 @@ static stm32_err_t stm32_send_init_seq(const stm32_t *stm)
 	size_t ret;
 	uint8_t byte, cmd = STM32_CMD_INIT;
 
+	delay(50);
 	ret = stream->write(&cmd, 1);
 	if (ret != 1) {
 		DEBUG_MSG("Failed to send init to device");
 		return STM32_ERR_UNKNOWN;
 	}
-	ret = stream->readBytes(&byte, 1);
+	delay(50);
+    // Try up to 3 times to read the init command
+    for (int attempts = 0; attempts < 3; attempts++) {
+        ret = stream->readBytes(&byte, 1);
+        if (ret == 1)
+            break;
+        DEBUG_MSG("Failed to read ACK from device (try %d)", attempts + 1);
+        delay(50); // short delay between tries
+    }
 	DEBUG_MSG("Init reply: ret=%d, byte=0x%02X", ret, byte);
 	if (ret == 1 && byte == STM32_ACK)
 		return STM32_ERR_OK;

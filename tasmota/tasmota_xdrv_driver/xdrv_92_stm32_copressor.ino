@@ -43,9 +43,16 @@ TasmotaSerial *StmSerial = nullptr;
 struct STM
 {
     uint8_t *buffer = nullptr;          // Serial receive buffer
+    int byte_counter = 0;               // Index in serial receive buffer
     bool present = false;
 } Stm;
 
+struct STM_COMMAND {
+  uint8_t command;
+  uint8_t parameter;
+  uint8_t unused2;
+  uint8_t unused3;
+} STMCommand;
 
 /*********************************************************************************************\
  * STM firmware update Functions
@@ -75,12 +82,13 @@ void StmResetToDFUMode()
 
 bool StmUpdateFirmware(uint8_t* data, uint32_t size)
 {
-#ifdef STM32_DEBUG
+#ifdef STM32_COPROCESSOR_DEBUG
     AddLog(LOG_LEVEL_DEBUG, PSTR(STM_LOGNAME "Update firmware"));
 #endif  // STM32_COPROCESSOR_DEBUG
 
     bool ret = true;
-    stm32_t *stm = stm32_init(&Serial, STREAM_SERIAL, 1);
+    stm32_t *stm = stm32_init(&Serial, STREAM_SERIAL, 1);   // works
+    // stm32_t *stm = stm32_init(StmSerial, STREAM_SERIAL, 1);    // does not work
     if (stm)
     {
         off_t   offset = 0;
@@ -132,18 +140,27 @@ bool StmPresent(void) {
 }
 
 uint32_t StmFlash(uint8_t* data, size_t size) {
+// bool error = true;
 #ifdef STM32_COPROCESSOR_DEBUG
   AddLog(LOG_LEVEL_INFO, PSTR(STM_LOGNAME "Updating firmware with %u bytes"), size);
 #endif  // STM32_COPROCESSOR_DEBUG
-
-  Serial.end();
-  Serial.begin(115200, SERIAL_8E1);
-  StmResetToDFUMode();
-  bool error = !StmUpdateFirmware(data, size);  // Allow flash access without ESP.flashRead
-  Serial.end();
-  StmResetToAppMode();
-  Serial.begin(115200, SERIAL_8N1);
-
+    StmSerial->end();
+    Serial.end(); // Close the default serial port (UART0) to avoid conflicts
+    // if (StmSerial->begin(115200, SERIAL_8E1)) {
+    Serial.begin(115200, SERIAL_8E1);
+      // if (StmSerial->hardwareSerial())
+      //     ClaimSerial();
+#ifdef ESP32
+      AddLog(LOG_LEVEL_DEBUG, PSTR(STM_LOGNAME "Flash via UART%d"), StmSerial->getUart());
+#endif
+      StmSerial->flush();   // clear the tx buffer
+      StmResetToDFUMode();
+      bool error = !StmUpdateFirmware(data, size);  // Allow flash access without ESP.flashRead
+      // StmSerial->end();
+      Serial.end();
+      StmResetToAppMode();
+      StmSerial->begin(115200, SERIAL_8N1);
+    // }
   return error;
 }
 
@@ -162,8 +179,8 @@ void StmResetToAppMode()
     delay(50);
 
     // clear in the receive buffer
-    while (Serial.available())
-        Serial.read();
+    while (StmSerial->available())
+        StmSerial->read();
 
     digitalWrite(Pin(GPIO_STM32_RST_INV), HIGH); // pull out of reset
     delay(50); // wait 50ms fot the co-processor to come online
@@ -172,13 +189,14 @@ void StmResetToAppMode()
 bool StmInit(void)
 {
 #ifdef STM32_COPROCESSOR_DEBUG
-    AddLog(LOG_LEVEL_INFO, PSTR(STM_LOGNAME "STM32 Driver Starting Tx %d Rx %d"), Pin(GPIO_TXD), Pin(GPIO_RXD));
+    AddLog(LOG_LEVEL_INFO, PSTR(STM_LOGNAME "STM32 Driver Starting Tx %d Rx %d"), Pin(GPIO_STM32_TX), Pin(GPIO_STM32_RX));
 #endif  // STM32_COPROCESSOR_DEBUG
 
     Stm.buffer = (uint8_t *)malloc(STM_BUFFER_SIZE);
     if (Stm.buffer != nullptr)
     {
-        StmSerial = new TasmotaSerial(Pin(GPIO_RXD), Pin(GPIO_TXD), 2, 0, STM_BUFFER_SIZE);
+        StmSerial = new TasmotaSerial(Pin(GPIO_STM32_RX), Pin(GPIO_STM32_TX), 0, 0, STM_BUFFER_SIZE); // Params: RX, TX, hardware_fallback (UART0,1,2), nwmode, buffer_size
+        Serial.end(); // Close the default serial port (UART0) to avoid conflicts
         if (StmSerial->begin(115200))
         {
             if (StmSerial->hardwareSerial())
@@ -187,22 +205,42 @@ bool StmInit(void)
 #ifdef ESP32
             AddLog(LOG_LEVEL_DEBUG, PSTR(STM_LOGNAME "Serial UART%d"), StmSerial->getUart());
 #endif
+            StmSerial->flush();
+            StmResetToAppMode();
+            // clear in the receive buffer
+            while (StmSerial->available())
+                StmSerial->read();
+            delay(50); // wait 50ms for the co-processor to come online
+
             uint8_t startbyte = STM_START_BYTE;
             StmSerial->write(&startbyte, 1); // Send start byte to wake up the co-processor
             StmSerial->flush();
 
-            // clear in the receive buffer
-            while (Serial.available())
-                Serial.read();
-            delay(50); // wait 50ms for the co-processor to come online
-
-            //StmResetToAppMode();
             return true;
         }
     }
     return false;
 }
 
+/*********************************************************************************************\
+ * Internal Functions
+\*********************************************************************************************/
+
+bool StmSerialInput(void)
+{
+  if(StmSerial->available()){
+    Stm.byte_counter = 0; // Buffer-Index zurücksetzen
+    while (StmSerial->available() && Stm.byte_counter < STM_BUFFER_SIZE - 1)
+    {
+        yield();
+        uint8_t serial_in_byte = StmSerial->read();
+        Stm.buffer[Stm.byte_counter++] = serial_in_byte;
+    }
+    Stm.buffer[Stm.byte_counter] = '\0';
+    ExecuteCommand((const char*)Stm.buffer, SRC_STM);
+  }
+  return true;
+}
 
 /*********************************************************************************************\
  * API Functions
@@ -221,6 +259,61 @@ bool StmModuleSelected(void) {
  * Commands
 \*********************************************************************************************/
 
+// void STM_sendCmnd(uint8_t cmnd, uint8_t param) {
+//   STMCommand.command = cmnd;
+//   STMCommand.parameter = param;
+//   char buffer[sizeof(STMCommand)];
+//   memcpy(&buffer[0], &STMCommand, sizeof(STMCommand));
+
+// #ifdef STM32_COPROCESSOR_DEBUG
+// AddLog(LOG_LEVEL_INFO, PSTR(STM_LOGNAME "SendCmnd %*_H"), sizeof(buffer), (uint8_t*)&buffer);
+// #endif
+//   for (uint32_t ca = 0; ca < sizeof(buffer); ca++) {
+//     StmSerial->write(buffer[ca]);
+//     StmSerial->flush();
+//   }
+// }
+
+#define D_PRFX_STM "Stm"
+#define D_CMND_STM_RESET "Reset"
+#define D_CMND_STM_SEND "Send"
+
+const char kTasmotaStmCommands[] PROGMEM = D_PRFX_STM "|"
+  D_CMND_STM_RESET "|" D_CMND_STM_SEND;
+
+void (* const TasmotaStmCommand[])(void) PROGMEM = {
+  &CmndStmReset, &CmndStmSend };
+
+void CmndStmReset(void) {
+  pinMode(Pin(GPIO_STM32_RST_INV), OUTPUT);
+  digitalWrite(Pin(GPIO_STM32_RST_INV), LOW);
+  delay(50);
+
+  // clear in the receive buffer
+  while (StmSerial->available())
+      StmSerial->read();
+
+  digitalWrite(Pin(GPIO_STM32_RST_INV), HIGH); // pull out of reset
+  delay(50); // wait 50ms for the co-processor to come online
+  ResponseCmndDone();
+}
+
+void CmndStmSend(void) {
+  if (0 < XdrvMailbox.data_len) {
+#ifdef STM32_COPROCESSOR_DEBUG
+    char ascii_buf[XdrvMailbox.data_len + 1];
+    memcpy(ascii_buf, XdrvMailbox.data, XdrvMailbox.data_len);
+    ascii_buf[XdrvMailbox.data_len] = '\0';
+    AddLog(LOG_LEVEL_INFO, PSTR(STM_LOGNAME "Sent data (%u bytes): %s"), XdrvMailbox.data_len, ascii_buf);
+#endif
+    uint8_t buf[XdrvMailbox.data_len + 1];
+    memcpy(buf, XdrvMailbox.data, XdrvMailbox.data_len);
+    buf[XdrvMailbox.data_len] = '\0';
+    StmSerial->write(buf, XdrvMailbox.data_len + 1);
+    StmSerial->flush();
+  }
+  ResponseCmndDone();
+}
 
 /*********************************************************************************************\
  * Driver Interface
@@ -233,15 +326,15 @@ bool Xdrv92(uint32_t function) {
     result = StmModuleSelected();
   } else if (Stm.present) {
     switch (function) {
-    //   case FUNC_EVERY_SECOND:
-    //     break;
+    case FUNC_EVERY_50_MSECOND:
+      StmSerialInput(); // Process incoming data from the STM32 co-processor
+      break;
       case FUNC_INIT:
-        StmInit();
+        result = StmInit();
         break;
-    //   case FUNC_SET_DEVICE_POWER:
-    //     break;
-    //   case FUNC_SET_CHANNELS:
-    //     break;
+      case FUNC_COMMAND:
+        result = DecodeCommand(kTasmotaStmCommands, TasmotaStmCommand);
+        break;
       case FUNC_ACTIVE:
         result = true;
         break;

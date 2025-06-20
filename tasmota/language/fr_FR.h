@@ -1030,6 +1030,8 @@
 #define D_SENSOR_C8_CO2_5K_TX  "C8-CO2-5K Tx"
 #define D_SENSOR_STM32_BOOT0   "STM Boot 0"
 #define D_SENSOR_STM32_RST_INV "STM Reset"
+#define D_SENSOR_STM32_TX      "STM TX"
+#define D_SENSOR_STM32_RX      "STM RX"
 
 
 // Units

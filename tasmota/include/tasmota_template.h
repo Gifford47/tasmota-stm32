@@ -232,7 +232,7 @@ enum UserSelectablePins {
   GPIO_C8_CO2_5K_TX, GPIO_C8_CO2_5K_RX, // C8-CO2-5K CO2 Sensor
   GPIO_V9240_TX, GPIO_V9240_RX,         //  V9240 serial interface
   GPIO_LD2402_TX, GPIO_LD2402_RX,       // HLK-LD2402
-  GPIO_STM32_BOOT0, GPIO_STM32_RST_INV, // STM32 Boot0 and Reset
+  GPIO_STM32_BOOT0, GPIO_STM32_RST_INV, GPIO_STM32_TX, GPIO_STM32_RX, // STM32 Boot0 and Reset
   GPIO_SENSOR_END};
 
 // Error as warning to rethink GPIO usage with max 2045
@@ -512,7 +512,7 @@ const char kSensorNames[] PROGMEM =
   D_SENSOR_C8_CO2_5K_TX "|" D_SENSOR_C8_CO2_5K_RX "|"
   D_SENSOR_V9240_TX "|" D_SENSOR_V9240_RX "|"
   D_SENSOR_LD2402_TX "|" D_SENSOR_LD2402_RX "|"
-  D_SENSOR_STM32_BOOT0 "|" D_SENSOR_STM32_RST_INV
+  D_SENSOR_STM32_BOOT0 "|" D_SENSOR_STM32_RST_INV "|" D_SENSOR_STM32_TX "|" D_SENSOR_STM32_RX
   ;
 
 const char kSensorNamesFixed[] PROGMEM =
@@ -1137,6 +1137,8 @@ const uint16_t kGpioNiceList[] PROGMEM = {
 #ifdef USE_STM32_COPROCESSOR
   AGPIO(GPIO_STM32_BOOT0),
   AGPIO(GPIO_STM32_RST_INV),
+  AGPIO(GPIO_STM32_TX),
+  AGPIO(GPIO_STM32_RX),
 #endif
 #ifdef USE_LD2410
   AGPIO(GPIO_LD2410_TX),                         // HLK-LD2410 Serial interface
